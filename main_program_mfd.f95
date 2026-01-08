@@ -21,6 +21,7 @@ MODULE BASIC
 	INTEGER :: RIVER_NUM 
 	REAL (KIND = 8), ALLOCATABLE, DIMENSION (:) :: RIVER_HEAD,RIVER_BED,RIVER_THICKNESS !,RIVER_AREA ! River area is not needed here but we still keep that for future use.
 !-------For basis parameters
+	REAL (KIND = 8) :: LAMADA_S   ! COEFFICIENT FOR STABILITY
 	REAL (KIND = 8) :: T,DT,ZX,ERRO,ERROX2,T_START
 	REAL (KIND = 8) :: DT_AMP,T_LIM
 	INTEGER :: INTER_CONTROL,K_SCHEME
@@ -61,7 +62,7 @@ MODULE MATRIX
  	REAL (KIND = 8) :: ALPHA,M2,A,B,THETAS,THETAR,K_SS  ! K_SS is the mutiplier for the saturated Ks
  	REAL (KIND = 8) :: K_S(2,2) ! Saturated hydraulic conductivity is a tensor
  	REAL (KIND = 8) :: MTH,CTH,HTH,SS,MTHN,HTHN,KTH  ! KTH is the relative hydraulic conductivity
- 	REAL (KIND = 8) :: HTH1,VX,VY
+ 	REAL (KIND = 8) :: HTH1,VX,VY,VV(2)
  	REAL (KIND = 8) :: HDRY,HWET
  	REAL (KIND = 8), ALLOCATABLE :: NX(:),NY(:),AREA(:)
  	REAL (KIND = 8), ALLOCATABLE :: MCF(:,:),RRNC(:,:)
@@ -79,7 +80,7 @@ END MODULE MATRIX
 	USE BASIC
 	USE MATRIX
 	IMPLICIT NONE
-	INTEGER :: I,J,K,N,IK,JK,NK,KK
+	INTEGER :: I,J,K,N,IK,JK,NK,KK,II,JJ
 	INTEGER :: IKKK
 	CHARACTER (LEN = 256) :: PATH
 	REAL (KIND = 8) :: KTH1,DT_REP,DH_STEADY_MAX
@@ -133,8 +134,23 @@ END MODULE MATRIX
 					OPEN (911,FILE = trim(PATH)//trim(NAME_FILE)//'_head_v'//CHAR(IK+48)//'.dat')
 					DO N = 1,DRAW_NUM
 						KK = DRAW_XYZ(N)
-						WRITE (911,'(20F20.10)') CELL_COE(KK)%X,CELL_COE(KK)%Y, &
-						CELL_COE(KK)%HTH,CELL_COE(KK)%VX,CELL_COE(KK)%VY,CELL_COE(KK)%CELL_V
+						NK = 0
+						IF (CELL_COE(KK)%SINGULAR_FLAG.NE.0) THEN 
+							NK = 1
+						ELSE 
+							DO I = 1,CELL_COE(KK)%POINT_SIZE
+								K = CELL_COE(KK)%POINT_INDEX(I)
+								DO J = 1,FACE_COE(K)%CELL_NUM
+									II = FACE_COE(K)%CELL_IND(J)
+									IF (CELL_COE(II)%SINGULAR_FLAG.NE.0) THEN 
+										NK = 1
+									END IF
+								END DO
+							END DO
+						END IF
+						
+						WRITE (911,'(I8,20F20.10)') NK,CELL_COE(KK)%X,CELL_COE(KK)%Y, &
+					CELL_COE(KK)%HTH,CELL_COE(KK)%VX,CELL_COE(KK)%VY,CELL_COE(KK)%CELL_V
 					END DO
 					CLOSE (911)
 					

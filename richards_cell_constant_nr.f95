@@ -19,6 +19,7 @@
  REAL (KIND = 8) :: MTH,CTH
  REAL (KIND = 8), ALLOCATABLE :: VX(:),VY(:)
  REAL (KIND = 8) :: P_COE(3)
+ REAL (KIND = 8), ALLOCATABLE :: AK(:,:),AA(:,:),A_INV(:,:),A_RES(:),A_R_NOR(:)
 
  ERRO1 = 1.0
  
@@ -321,6 +322,7 @@
  END DO
  
 ! Compute Velocity on each edge
+ 
  DO K = 1,CELL_TOT
  	IF (CELL_COE(K)%POINT_TYPE.NE.(-1)) THEN 	
  		FACE_NUM = CELL_COE(K)%POINT_SIZE
@@ -334,6 +336,7 @@
  		CELL_COE(K)%VY = (P_COE(2)*CELL_COE(K)%K_S(2,1)+P_COE(3)*CELL_COE(K)%K_S(2,2))   !*CELL_COE(K)%KTH
  	END IF
  END DO
+ CLOSE (12)
  
  END SUBROUTINE 
  
